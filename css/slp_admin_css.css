@@ -1,0 +1,98 @@
+@charset "UTF-8";
+/* CSS Document */
+
+.ajax_control {
+}
+.time_select {
+	margin-left: -40px;
+	margin-top: -15px;
+}
+.desc {
+	margin-left: 20px;
+}
+#closetime-container select, #readytime-container select {
+	height: 110px;
+}
+#slp .hndle, .meta_box_button, .dialog_nav, .ui-dialog-titlebar {
+	background: rgb(208,228,247); /* Old browsers */
+	background: -moz-linear-gradient(top, rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%) !important; /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(208,228,247,1)), color-stop(24%, rgba(115,177,231,1)), color-stop(50%, rgba(10,119,213,1)), color-stop(79%, rgba(83,159,225,1)), color-stop(100%, rgba(135,188,234,1))) !important; /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%) !important; /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%) !important; /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%) !important; /* IE10+ */
+	background: linear-gradient(to bottom, rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%) !important; /* W3C */
+ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0e4f7', endColorstr='#87bcea', GradientType=0 ); /* IE6-9 */
+	color: #FFF !important;
+	min-width: 120px;
+	border-radius: 5px;
+	padding: 5px;
+}
+#no_pickup {
+	width: 15%;
+}
+#shipments thead {
+	background: #333;
+	color: #fff;
+}
+
+th {
+	border: 1px #CCC thin;
+	text-align: left;
+}
+.th_wide {
+	width: 250px;
+}
+.th_small {
+	width: auto;
+}
+#shipments th {
+	padding: 0 5px;
+	text-align: left;
+}
+.slp_selectable {
+	cursor: pointer;
+}
+.selectable:hover {
+	background: #CCC;
+}
+.slp_active {
+	background: #00F;
+	color: #fff;
+}
+.mb_label {
+	font-size: 14px;
+}
+.mb_value {
+	font-size: 14px;
+	padding-left: 8px;
+	font-weight: bold;
+}
+.dialog {
+	background: #fff;
+}
+.slp-filter {
+	max-width: 90px;
+}
+.table_label {
+	color: #FFF;
+	background-color: #666;
+}
+#rate_confirm th, .contents th {
+	text-align: center;
+}
+.connectedSortable {
+	background: #eeeefe;
+	min-height: 50px;
+	min-width: 320px;
+	max-height: 260px;
+	overflow-y: scroll;
+}
+.connectedSortable li {
+	font-size: 13px;
+	padding: 3px 5px;
+	border-radius: 5px;
+	margin: 2px 0px !important;
+	cursor: pointer;
+	
+}
+
