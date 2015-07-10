@@ -1077,27 +1077,30 @@ class SLP_USPS extends SLP_Shipping_Method {
 			if( isset( $tracking->TrackingEvents ) ) {
 				
 				$events = $tracking->TrackingEvents->TrackingEvent;
-				
-				if( ! isset( $package->TrackingStatus ) ) {
-					$package->TrackingStatus = array();
-					
-					foreach( $events as $event ) {
-						
-						//format tracking information for storage
-						$timestamp =  $event->Timestamp;
-				
-						$event = strtoupper( $event->TrackingEventType );
 			
-						$tracking_info = array( 
-							'timestamp' => date( 'm/d/Y h:i a', strtotime( $timestamp, current_time( 'timestamp' ) ) ),
-							'status'	=> $event,
-							'desc'		=> $event->Event,
-							'location'	=> $event->City . ', ' . $event->State . ', ' . $event->Country,
-							'signer' 	=> $tracking->SignedBy,
-						);
-						
-						$package->TrackingStatus[] = $tracking_info; 
-					}
+				$package->TrackingStatus = array();
+				
+				foreach( $events as $event ) {
+					
+					//format tracking information for storage
+					$timestamp =  $event->Timestamp;
+			
+					$event_type = strtoupper( $event->TrackingEventType );
+					
+					$tracking_info = array( 
+						'timestamp' => date( 'm/d/Y h:i a', strtotime( $timestamp, current_time( 'timestamp' ) ) ),
+						'status'	=> $event_type,
+						'desc'		=> $event->Event,
+						'location'	=> array(
+							'city' 		=> $event->City ,
+							'state'		=> $event->State ,
+							'zip'		=> $event->Zip,
+							'country'	=> $event->Country,
+						),
+						'signer' 	=> $event->SignedBy,
+					);
+					
+					$package->TrackingStatus[] = $tracking_info; 
 				}
 			
 			//add updated tracking info
