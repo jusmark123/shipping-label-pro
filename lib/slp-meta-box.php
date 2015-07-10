@@ -1,7 +1,7 @@
 <?php
 /*
  * Class Name: 		SLP Meta Box
- * Version: 		3.0.0
+ * Version: 		3.1.0
  */
 if( ! defined( 'ABSPATH' ) )  exit; //Exit if accessed directly
 
@@ -52,7 +52,9 @@ class SLP_Meta_Box {
 		global $post, $woocommerce;
 					
 		//set boolean flag for use in javascript code
-		$shipped = $shipment['_shipment_status'] === 'Not Shipped' ? 0 : 1; ?>
+		$shipped = $shipment['_shipment_status'] === 'Not Shipped' ? 0 : 1; 
+		$shipment["_version"] = "3.0.0";
+		?>
 		
 		<!--HTML meta box code start-->	
        	<div id="slp_meta_box">							
@@ -65,10 +67,13 @@ class SLP_Meta_Box {
                 	<td class="mb_label" colspan="2">Tracking Number(s): <a href="#" class="ajax_control" title="Click to repack items" id="repack">Repack Items</a></td>
                 </tr>
                 <tr><td class="mb_value"><?php
+				
          if( isset( $shipment['_packages'] ) ) { ?>
                         <table><?php
 			//parse through packages for display		
-			foreach( $shipment['_packages'] as $key => $package ) { ?>
+			foreach( $shipment['_packages'] as $key => $package ) { 
+				//print_r( $package->TrackingStatus );
+			?>
 							<tr>
 								<td><a href="#" class="ajax_control" id="slip" name="<?php echo $key; ?>" title="Click to view packing slip.">Box<?php echo ($key + 1 ); ?></a>:</td>
                                 <td><span id="box<?php echo $key;?>"><?php echo $package->id; ?></span></td>

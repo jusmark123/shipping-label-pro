@@ -1,14 +1,17 @@
 <?php
+/*
+ * File Name: slp-functions
+ * Version: 3.1.0
+ */
+ 
 if( ! defined( 'ABSPATH' ) ) exit; //exit if accessed directly
 
 function get_tracking_url( $carrier, $tracking_number, $postcode ) {
 	$tracking_urls = apply_filters( 'slp_supported_providers', array( 
 		'UPS' 	=> 'http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=%1$s',
 		'USPS'	=> 'https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=%1$s',
-		'Fedex'	=> 'http://www.fedex.com/Tracking?action=track&tracknumbers=%1$s',
+		'FEDEX'	=> 'http://www.fedex.com/Tracking?action=track&tracknumbers=%1$s',
 	) );
-	
-	//var_dump( $carrier );
 	
 	$track_link = sprintf( $tracking_urls[$carrier], $tracking_number, urlencode( $postcode ) );
 	$track_link = sprintf( __('<a href="%s" target="_blank">%s</a>', 'slp' ), $track_link, $tracking_number );
@@ -173,25 +176,42 @@ function objectToArray( $object ) {
 	return array_map( 'objectToArray', $object );
 }
 
+/*
+ * Check shipment array structure and update if needed to be compatible with current SLP version
+ *
+ * @params mixed $order, mixed $shipment
+ * 
+ */
+
 function cleanse_shipment( $order, $shipment = array() ) {
-		
+	
+	//Check if version number is present and is current, return if is upto date
 	if( isset( $shipment['_version'] ) && $shipment['_version'] === SLP_VERSION ) return $shipment;
 	
+	//Check if shipping cost has been calculated
 	if( ! isset( $shipment['_shipping_cost'] ) ) {
+		
+		//Check for shipping cost in order meta first
 		if( $shipping_total = get_post_meta( $order->id, '_shipping_cost', true ) ) {
-			$shipment['_shipping_cost'] = $shipping_total;	
+			
+			//set shipping cost
+			$shipping_cost = $shipping_total;	
 		} else {
 			//set inital shipment status
 			$shipment['_shipment_status'] = 'Not Shipped';
 			
 			//set shipping cost text
-			$shipment['_shipping_cost'] = '<span>Shipping Cost Not Calculated</span>';
+			$shipping_cost = '<span>Shipping Cost Not Calculated</span>';
 		}
+		
+		//add to shipment
+		$shipment['_shipping_cost'] = $shipping_cost;
 	}
 	
+	//Get shipment package data
 	$shipment = slp_ajax_functions::get_packages( $order, $shipment );
 		
-	//cleanse shipment if not new
+	//cleanse shipment if not compatible
 	if( ! isset( $shipment['_shipment_status'] ) || $shipment['_shipment_status'] != 'Not Shipped' ) {
 	
 		//parse through packages
@@ -220,11 +240,12 @@ function cleanse_shipment( $order, $shipment = array() ) {
 			if( isset( $package->tracking_status ) )
 				unset( $package->tracking_status );
 			
-			//store shipping lables shipping labels if they exists
+			//store shipping labels shipping labels if they exists
 			if( array_key_exists( '_shipping_labels', $shipment ) ) {
 			
 				//check if shipping label is base 64 gif code and format otherwise store as is
 				$package->ShippingLabel = preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $shipment['_shipping_labels'][$key] ) ? 'data:image/gif;base64,' . $shipment['_shipping_labels'][$key] : $shipment['_shipping_labels'][$key];
+				
 			}
 		}
 		
