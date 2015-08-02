@@ -912,7 +912,7 @@ class SLP_USPS extends SLP_Shipping_Method {
 		} else {
 			if( ! $check->AddressMatch ) {
 				if( $check->CityStateZipOK ) {
-					$valid = true;
+					$valid = false;
 					$message .= 'The City, State, & ZipCode entered are valid; however, no match was found for the street address. Please check the street address for errors.';
 				} else {
 					$valid = false;
@@ -920,7 +920,7 @@ class SLP_USPS extends SLP_Shipping_Method {
 				}
 			} else {	
 				$valid = true;
-				$message = 'The address was matched. Please review updated address below and click continue to proceed.';
+				$message = 'Please review updated address below and click continue to proceed.';
 			}
 		
 			$temp = array(
