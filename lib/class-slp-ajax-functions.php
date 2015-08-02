@@ -86,7 +86,7 @@ class slp_ajax_functions {
 						$order->set_address( $_POST['address'], 'shipping' );
 					}
 					$shipment['_valid_address'] = true;
-					//$this->update_shipment( $order->id, $shipment );
+					$this->update_shipment( $order->id, $shipment );
 				}
 			
 				if( isset( $_POST['customs'] ) ) {
@@ -118,591 +118,93 @@ class slp_ajax_functions {
 	public static function verify_address( $xml, $order, $shipment ) {
 		
 		$countries = new WC_Countries();
+		
+		if( ! valid ) {			
+			//domestic array for differentiating between domestic and internation shipments
+			$domestic = array( "US", "PR", "VI" );
 			
-		//domestic array for differentiating between domestic and internation shipments
-		$domestic = array( "US", "PR", "VI" );
-		
-		//assign returned address to variable for further processing
-		$address = isset( $xml['address'] ) ? $xml['address'] : '';
-						
-		//store and format data 	
-		$name 	 = strtoupper( $order->shipping_first_name . ' ' . $order->shipping_last_name );
-		$company = strtoupper( $order->shipping_company );
-		$csz = strtoupper( $order->shipping_city . ', ' . $order->shipping_state. ', ' . $order->shipping_country . ' ' . $order->shipping_postcode );
-		
-		//get shipment type domestic or international
-		$customs = ! in_array( $order->shipping_country, $domestic );
-		
-		//set initial title for dialog
-		$title = 'Step 1: Address Verification'; 
-
-		//clear buffer for html code
-        ob_start(); ?>
-	
-        <!---Style Declaration Start/HTML End-->
-        
-		<style>
-			.address_block {
-				padding: 0 20px;
-				display: inline-block;
-				vertical-align:	top;
-			}
-			#original_address {
-				padding-right:0;
-			}
-			#returned_address {
-				height:155px;
-				width: 415px;
-				overflow-y: scroll;
-				border-left: 1px solid #838181;
-			}
-			.slp_address, .selected_address {
-				border-radius: 5px;
-				padding: 10px;
-				background: #EEE;
-				box-shadow: 3px 3px 3px 1px;
-			}
-		</style>
-        
-        <!--End Style Declaration/HTML Start-->
-        
-        <div id="verify_address">
-        	<form id="address_select">
-        	<p id="slp_shipment_message"><?php echo $xml['message']; ?></p>
-            
-            <!---Original address block-->
-            
-        	<div id="original_address" class="address_block">
-            	<p class="slp_shipment_message">Original Address</p>
-                <table class="slp_address">
-                    <tr>
-                        <td><input type="radio" value="-1" name="selected" checked="checked" /></td>
-                        <td>
-                            <table>
-                                <tr><td><?php echo strtoupper( $order->shipping_address_1 ); ?></td></tr>
-                    <?php if( ! isset( $address_2 ) ) { ?>
-                                <tr><td><?php echo strtoupper( $order->shipping_address_2 );  ?></td></tr>
-                    <?php } ?>
-                                <tr><td><?php echo strtoupper( $csz ); ?></td></tr>
-                            </table>
-                        </td>
-                    </tr>
-             	</table>
-             </div><?php
-			 
-     	if( ! empty( $address ) ) { ?> 
-        
-             <!---Returned address block-->
-      	
-             <div id="returned_address" class="address_block">
-				<p class="slp_shipment_message"><?php echo sizeof( $xml['address'] ) > 1  ? sizeof( $xml['address'] ) . ' Results. Scroll to view all.' : 'Updated Address'; ?></p>
-             	<?php
-			foreach( $xml['address'] as $key => $address ) {
-         	$address_1 = $address['address_1'];
-			$address_2 = isset( $address['address_2'] ) ? $address['address_2'] : '';
-			$csz = $address['city'] . ', ' . $address['state'] . ', ' . $address['country'] . ' ' . $address['postcode'];?>
-                <table class="slp_address">
-                	<tr>
-                		<td><input type="radio" value="<?php echo $key; ?>" <?php echo $key == 0 ? 'checked="checked"' : '';?> name="selected" /></td>
-						<td>
-                        	<table>
-                       			<tr><td id="address_1"><?php echo $address_1; ?></td></tr>
-	<?php 		if( ! empty( $address_2 ) ) { ?>
-                	    		<tr><td id="address_2"><?php echo $address_2;  ?></td></tr>
-  	<?php 		} ?>	
-                    			<tr><td id="csz"><?php echo $csz; ?></td></tr>
-                            </table>
-                    	</td>
-                   </tr>	
-              	</table><?php
-			} ?>
-          	</div> <?php
-		} ?>
-            </form>
-            <p id="dialog_buttons"><button type="button" class="dialog_nav" id="address_edit">Edit Address</button></p>
-        </div>
-        
-        <!---Edit Address HMTL-->
-        
-        <div id="edit_address" style="display:none;">
-            <p>Make changes to this order's shipping address below then click continue to proceed.</p>
-            <form id="edit_address" action="" method="post">
-                <table>
-                    <tr>
-                        <td><label for="first_name">First Name</label></td>
-                        <td><input type="text" id="first_name" value="<?php echo  $order->shipping_first_name; ?>" /></td>
-                        <td><label for="last_name">Last Name</label></td>
-                        <td><input type="text" id="last_name" value="<?php echo $order->shipping_last_name; ?>" /></td>
-                   </tr>
-                   <tr>
-                        <td><label for="company">Company</label></td>
-                        <td><input type="text" id="company" value="<?php echo $order->shipping_company; ?>" /></td>
-                   </tr>
-                   <tr>
-                        <td><label for="address1">Address</label></td>
-                        <td><input type="text" id="address_1" value="<?php echo $order->shipping_address_1; ?>" /></td>
-                        <td><label for="address2">Address 2</label></td>
-                        <td><input type="text" id="address_2" value="<?php echo $order->shipping_address_2;?>" /></td>
-                   </tr>
-                   <tr>
-                        <td><label for="city">City</label></td>
-                        <td><input type="text" id="city" value="<?php echo $order->shipping_city; ?>" /></td>
-                        <td><label for="country">Country</label></td>
-                        <td><select id="country"><?php
-                            foreach( $countries->get_countries() as $key => $country ) {?>
-                                <option value="<?php echo esc_attr( $key );?>" <?php echo $order->shipping_country === $key ? 'selected="selected"' : ''; ?>><?php echo $country; ?> </option><?php
-                            } ?>
-                        </select></td>
-                   </tr>
-                   <tr>
-                        <td><label for="state">State</label></td>
-                        <td><select id="state"><?php
-                            foreach( $countries->get_states( $order->shipping_country ) as $key => $state ) {?>
-                                <option value="<?php echo esc_attr( $key ); ?>"<?php echo $order->shipping_state === $key ? 'selected="selected"' : ''; ?>><?php echo esc_html( strtoupper( $state ) ); ?> </option><?php
-                            } ?>
-                        </select></td>
-                        <td><label for="postcode">ZipCode</label></td>
-                        <td>
-                            <input type="text" id="postcode" style="width:75px;" value="<?php echo substr( $order->shipping_postcode, 0, 5 ); ?>" />
-                  <?php if( sizeof( $order->shipping_postcode ) == 4 ) {?>
-                            <span> - </span>
-                            <input type="text" id="zipcode_4" style="width:82px;" value="<?php echo substr( $order->shipping_postcode, 8 ); ?>" />
-                  <?php } ?>
-                        </td>
-                   </tr>     
-                </table>
-            </form>
-        </div><?php 
-       
-	    if( $customs ) { ?>
-		<!---Get customs form for international shipments--> <?php
-       		self::get_customs_form( $order, $shipment );
-		} ?>
-        
-        <!---End HTML/JavaScript Start-->
-        
-		<script type="text/javascript">
-			( function( $ ) {				
-				var options = {};
-				var buttons = $( '.dialog' ).dialog( 'option', 'buttons' );
-					buttons['Continue'] = function(){
-						address_selected();
-					};
-					
-					$( '.dialog' ).dialog( 'option', 'buttons', buttons );
-				
-				function address_selected() {
-					
-					var $selected = $( '#address_select input[type="radio"]:checked' );
-					var index =  $selected.index();
-					var address;
-					var message = '';
-					
-					$( '.dialog' ).dialog( 'option', 'title',  'Step 1: Address Verfication' );					
-					
-					$selected.closest( '.slp_address' ).toggleClass( 'selected_address' ).removeClass( 'slp_address' );
-		
-					$( '.address_block' ).not( $selected.closest( '.address_block' ) ).css( 'display', 'none' ).end().css('border', 'none').css( 'border-left', '1px solid' );
-					$( '#returned_address' ).css( 'height', '200px' );
-
-					var value = $selected.val();
-					
-					$selected.prop('checked', false ).focus().addClass( 'verified' ).get(0).type = 'checkbox';
-					
-					if( value >= 0 ) {
-						message = 'You have selected the below address. Please confirm by checking the box below and click continue to proceed.';
-											
-						address = $.makeArray( <?php echo json_encode( $address ); ?> );	
-						address = address[index];
-						$( '#slp_shipment_message' ).css( 'color', 'green' );
-					} else {
-						message = "You have selected a non-validated address. Delivery cannot be guaranteed. Please confirm by checking the box below and click continue to proceed. The carrier is not responsible for undelivered or mis-delivered packages. Also note a fee may be assessed if address is not valid.";
-						address = 'original';
-						$( '#slp_shipment_message' ).css( 'color', 'red' );
-					}	
-					
-					$selected.parent().next().children().prepend( '<tr><td><?php echo $name;?></td></tr><tr><td><?php echo $company;?></td></tr>' );
-					
-					$( '.slp_address' ).hide();
-					
-					$( '#slp_shipment_message' ).text( message ) 
-					
-					buttons = $( '.dialog' ).dialog( 'option', 'buttons' );
-					
-					buttons['Continue'] = function() {
-						get_rates( address );
-					}
-					
-					options = {
-						title: 'Step 1: Confirm Address Selection',
-						buttons: buttons
-					}
-					
-					dialog_options( options );
-				}
-				
-				function get_customs( data ) {  					
-					buttons = $( '.dialog' ).dialog( 'option', 'buttons' );
-					
-					$( '#customs' ).toggle();
-					$( '#verify_address' ).toggle();
-					 
-					$( '#address_edit' ).hide();
-					
-					options = {
-						width: 1000,
-						title: 'Step 1: Customs Form - CN22'
-					}
-					
-					buttons['Continue'] = function() {
-						var customs = {};
-						var lines = [];
-					
-						customs['ContentType'] = $( '#ContentType' ).val();
-						customs['Comments'] = $( '#Comments' ).val();
+			//assign returned address to variable for further processing
+			$address = isset( $xml['address'] ) ? $xml['address'] : '';
 							
-						$('.customs_line').each(function() {
-							var line = {};
-							$(this).children('td').children().each(function(){
-								line[$(this).attr('class').split(' ')[0]] = $(this).val(); 	
-							});
-							
-							lines.push(line)
-						});
-						
-						customs['CustomsLines'] = lines;
-						
-						data['customs'] = customs;
-						
-						clear_history();	
-						
-						ajax_request( data );				
-					}
-					
-					options['buttons'] = buttons;
-					
-					dialog_options( options );
-				}
-						
-				function get_rates( address ) {
-					if( $( '.verified' ).length ) {
-						if( $( '.verified' ).is( ':checked' ) ) {
-							var data = {
-								action: 'process_shipment',
-								post: <?php echo $order->id; ?>,
-								address: address,
-								call: 'GetRates'
-							}
+			//store and format data 	
+			$name 	 = strtoupper( $order->shipping_first_name . ' ' . $order->shipping_last_name );
+			$company = strtoupper( $order->shipping_company );
+			$csz = strtoupper( $order->shipping_city . ', ' . $order->shipping_state. ', ' . $order->shipping_country . ' ' . $order->shipping_postcode );
+			
+			//get shipment type domestic or international
+			$customs = ! in_array( $order->shipping_country, $domestic );
+			
+			//set initial title for dialog
+			$title = 'Step 1: Address Verification'; 
+	
+			//clear buffer for html code
+			ob_start(); 
+			
+			include( 'templates/slp-verfiy-address.php' );
+			   
+			if( $customs ) { ?>
+			<!---Get customs form for international shipments--> <?php
+				self::get_customs_form( $order, $shipment );
+			}
+	
+  			$xml = array( 
+            	'Success'  	 	=> true,
+            	'StatusMessage' => ob_get_clean(),
+            	'Title'			=> $title,
+				'Post' 			=> $order->id,
+				'Address'		=> $address
+        	);
 
-							$( '#dialog_message' ).text( '' );
-						
-							$( '#edit_address' ).hide();
-
-							if( <?php echo (int)$customs; ?> ) {
-								get_customs( data );
-							} else {
-								clear_history();
-								ajax_request( data );
-							}
-						} else {
-							$( '#dialog_message' ).text( 'Please confirm the address below by checking the box below and click continue to proceed.' );
-						}
-					} else {
-						$( '.ui-dialog-buttonset' ).children().eq(0).hide();	
-						address_selected();
-					}
-				}
-	
-				$('#address_edit').one('click', function() {
-					set_history();
-					$( '#dialog_message' ).text( '' );
-	
-					var prev_title = $('.dialog').dialog( 'option', 'title' );
-	
-					$('#verify_address').toggle(); 
-					$('#edit_address').toggle();
-	
-					$('.dialog').dialog( 'option', 'title', 'Edit Address' );
-					
-					buttons['Continue'] = function() {
-						var data = {
-							action: 'process_shipment',
-							call: 'VerifyAddress',
-							post: '<?php echo $order->id; ?>'
-						};
-						
-						if( $('#edit_address').length ) {
-							var address = {};
-						 	$('#edit_address input, #edit_address select').each( function(e) {
-							  	address[$(this).attr('id')] = $(this).val();
-						  	});
-						  
-						  	data['address'] = address,
-							
-							ajax_request( data );
-						}
-					};
-					
-					$( '.dialog' ).dialog( 'option', 'buttons', buttons );
-					
-					$('#country').on('change', function() {
-						var data = {
-							action: 'get_states',
-							country:$(this).val(),
-						}
-					
-						$.post( ajaxurl, data, function(response) {
-							if( response = $.parseJSON(response)) {
-								$('#state').empty();
-								$.each(response, function( key, value) {
-									$('#state').append($('<option></option>').val(key).html(value));
-								});
-							}
-						});		
-					});
-				});
-			})( jQuery );
-		</script>
-            
-  <?php $xml = array( 
-            'Success'  	 	=> true,
-            'StatusMessage' => ob_get_clean(),
-            'Title'			=> $title,
-			'Post' 			=> $order->id,
-			'Address'		=> $address
-        );
-
-	 	self::send_json( $xml );	
+	 		self::send_json( $xml );
+		} else {
+			self::$shipper->get_rates( $order, $shipment );
+		}
 	}
 	
 	public function get_customs_form( $order, $shipment ) {
 		//get woocommerce countries/state array
 		$countries = new WC_Countries(); 
         
-        $settings = get_option( 'slp_general_settings' ); ?>
-        			
-        <!--End PHP/HTML Start-->
+        $settings = get_option( 'slp_general_settings' );
 		
-        <div id="customs" style="display:none;">
-            <p>International shipments require completion of customs declaration where applicable. Please complete the form below and click continue.</p>
-            <form id="customs_form" method="post">
-            	<p><label for="ContentType">Contents:</label>
-          		<select id="ContentType"><?php
-               	foreach( self::$shipper->get_content_types() as $key => $type ) { ?>
-                	<option value="<?php echo esc_attr( $key ); ?>" <?php echo $key == 1 ? 'selected="selected"' : ''; ?>><?php echo  esc_html( $type ); ?></option><?php	
-                } ?>
-               	</select>
-               	<label for="comments">Comments</label>
-              	<input type="text" id="Comments" maxlength="76"  /></p>
-                <table id="customs_table">
-                    <thead>
-                        <tr>
-                            <th/>
-                            <th>Qty</th>
-                            <th>Description</th>
-                            <th colspan="2">Weight</th>
-                            <th style="padding:0 5px;">HS Tarriff</th>
-                            <th>Country of Orgin</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody><?php
-				$total_pounds = 0;
-				$total_ounces = 0;
-				foreach( $order->get_items() as $key => $item ) { 
-					$product = wc_get_product( $item['product_id'] ); 
-					$ounces = $product->get_weight() * $item['qty'];
-					$pounds = $ounces * 0.0625;
-					$split = number_format( ( $pounds - floor( $pounds ) ) * 16, 0 );
-					$total_ounces += $ounces; ?>
-                        <tr class="customs_line">
-                            <td class="remove"></td>
-                            <td><input style="width:50px;" type="number" min="1" step="1" value="<?php echo isset( $item['qty'] ) ? $item['qty'] : 0; ?>" class="Quantity" /></td>
-                            <td><input type="text" maxlength="60" class="Description" value="<?php echo $item['name']; ?>" /></td>
-                            <td style="padding-right:10px;"><input style="width:50px;" type="number" min="0" max="70" step="1" value="<?php echo round( $pounds ); ?>" class="WeightLb total" /> lbs</td>
-                            <td style="padding-right:10px;"><input style="width:50px;" type="number" min="0" max="15" step="1" value="<?php echo $split; ?>" maxlength="4"  class="WeightOz total"  /> oz</td>
-                            <td><input style="width:80px;"type="text" maxlength="6" class="HSTariffNumber"  /></td>
-                            <td><select class="CountryOfOrigin"><?php
-                                foreach( $countries->get_countries() as $key => $country ) { ?>                       
-                                    <option value="<?php echo esc_attr( $key ); ?>" <?php echo $settings['country'] == $key ? 'selected="selected"' : '';?>><?php echo esc_html( $country ); ?></option>
-                          <?php } ?>
-                                </select>
-                            </td>
-                            <td><input style="width:80px;" type="text" maxlength="6" value="<?php echo isset( $item['line_total'] ) ? number_format( $item['line_total'], 2 ) : 0.00; ?>" class="Value total"  /></td>
-                        </tr><?php
-				} ?>
-                    </tbody>    
-                </table>
-                <table width="100%">
-                	<tbody>
-                        <tr>
-                            <td><a href="#" id="add_line">Add Another Line</a></td>
-                            <td/><?php
-								$pounds = $total_ounces * .0625;
-								$ounces = number_format( ( $pounds - floor( $pounds ) ) * 16, 1 ) ?>
-                            <td>Total Weight: <span id="tot_WeightLb"><?php echo floor( $pounds ); ?></span> lbs. <span id="tot_WeightOz"><?php echo $ounces; ?></span> oz.</td>
-                            <td/> 
-                            <td>Total Itemized Value: $<span id="tot_value"><?php echo $order->get_subtotal(); ?></span></td>
-                        </tr>
-                   </tbody>
-                </table>
-            </form>
-        </div>
-		<script type="text/javascript">
-			(function($) {
-				$( '#add_line' ).on( 'click', function() {				
-					$( '.customs_line' ).last().clone( true ).appendTo( '#customs_table' );
-					$( '.customs_line' ).last().children( 'td' ).each( function() {
-						$(this).children( 'input' ).val( $( this ).children( 'input' ).attr( 'min' ) )
-						$(this).children('.value' ).val( '0.00' );		
-					})
-					$( '.remove' ).html( '<a href="#" class="remove">Remove</a>' ).on( 'click', function() { 
-						$( this ).parent( 'tr' ).remove();
-					
-						if( $( '.customs_line' ).length < 2 ) {
-							$( '.remove' ).empty();	
-						}
-					});
-				});
-				
-				$( '.total' ).on( 'change', function() {
-					var calc = 0;
-					var element = $( this ).attr( 'class' ).split( ' ' )[0];
-					
-					$( '.' + element ).each( function( e ) {
-						calc += parseFloat( $( this ).val() );	 
-					});
-					 
-					if( element === 'Value' ) { 
-						$( '#tot_value' ).text( calc.toFixed( 2 ) );	
-					} else {
-						$( '#tot_' + element ).text( calc );	
-					}
-				});
-			})(jQuery);
-		</script><?php
+		$ob_start();
+		
+		include( 'templates/slp-customs.php' );       	
+       	
+		return ob_get_clean();
     }
 	
 	public static function confirm_rates( $order, $shipment ) {	
 		
 		self::update_shipment( $order->id, $shipment );	
-		
-		$step = isset( $shipment['_customs'] ) ? 3 : 2;	
-	
-		$title = "Step $step: Confirm Package Detail and Rates";
-	
+				
 		$packages = $shipment['_packages'];
 	
 		$shipping_cost = $order->get_total_shipping();
 		$shipping_total = $shipment['_shipping_cost'];
 		
-		ob_start();?>
-		<style type="text/css">
-			#rate_confirm {
-				border-radius: 5px;
-			  	background: #EEE;
-			  	padding: 5px;
-			  	box-shadow: 3px 3px 3px 2px;
-			}
-		</style>
-        <p>Please confirm packages detail and costs below and click continue to proceed. Click cancel to end shipment processing.</p>
-        <span>Service Method: <?php echo $order->get_shipping_method(); ?></span>
-		<p><table width="100%" id="rate_confirm">
-                <thead>
-                    <tr test>
-                        <th>Box#</th>
-                        <th>Package Type</th>
-                        <th colspan="4">Dimenisions</th>
-                        <th>View</th>
-                    </tr>
-                </thead>
-                <tbody><?php
+		ob_clean();
 		
-		foreach(  $packages as $key => $package ) { ?>
-              	<tr style="text-align:center;">
-                	<td>Box <?php echo $key + 1; ?></td>
-                 	<td><?php echo $package->PackageType; ?></td>
-                  	<td>L= <?php echo $package->length; ?> in</td>
-                  	<td>W= <?php echo $package->width; ?> in</td>
-                  	<td>H= <?php echo $package->height; ?> in</td>
-                 	<td>Weight= <?php echo number_format( $package->weight, 2 ); ?> lbs</td>
-                 	<td><a href="#" class="view_contents">View Contents</a></td>
-              	</tr>
-                <tr style="display:none;">
-                	<td/>
-                	<td colspan="7">
-                		<table class="contents" width="90%" style="border-top:1px solid #555;">
-                    		<thead>
-                        		<tr>
-                        	    	<th>View</th>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Unit Price</th>
-                                    <th>Line Total</th>
-                        	    </tr>
-                        	</thead>
-                        	<tbody>
-                     		<?php self::get_contents( $order, $packages[$key] ); ?>
-                     	   </tbody>
-                    	</table>
-                   	</td>
-               </tr>
-        
-  <?php	} ?>
-             	<tr>
-                 	<td colspan="6" style="text-align:right; border-top:2px solid #000;">Total Shipping Charges</td>
-                  	<td style="border-top:2px solid #000; text-align:right;"><?php echo wc_price( $shipping_total ); ?></td>
-              	</tr>
-              	<tr>
-                  	<td colspan="6" style="text-align:right;">Customer Paid</td>
-                  	<td style="text-align:right;"><?php echo wc_price( $shipping_cost ); ?></td>
-              	</tr>
-              	<tr>
-                  	<td colspan="6" style="text-align:right;">You <?php echo ( $shipping_cost > $shipping_total ? 'Save' : 'Pay' ); ?></td>
-                 	<td style="text-align:right;"><?php echo wc_price( $shipping_cost - $shipping_total ); ?></td>
-              	</tr>
-                <tr>
-                	<td><label for="shippingInstructions">Shipping Instructions</label></td>
-                  <td colspan="6"><textarea id="shippingInstructions" placeholder="Enter Shipping Instructions" style="width;100%;"><?php echo $order->customer_note; ?></textarea></td>
-              	</tr>    
-       	  </tbody>
-      	</table></p>
-        
-		<script type="text/javascript">
-			(function($){
-				$( '#dialog_message' ).text( '' );
-				
-				$( '.view_contents' ).on( 'click', function() {
-					$(this).closest( 'tr' ).next().slideToggle();		
-				});
-				
-				var buttons = $( '.dialog' ).dialog( 'option', 'buttons' );
-								
-				buttons['Continue'] = function() {
-					var data = {
-						action: 'process_shipment',
-						call: 'CreateShipment',
-						post: <?php echo $order->id; ?>,
-						memo: $( '#shippingInstructions' ).html()
-					}
-					
-					ajax_request( data );
-				}
-				
-				$('.dialog' ).dialog( 'option', 'buttons', buttons );
-			})(jQuery);
-		
-		</script>
-		<?php
-		
+		if( $shipping_total > $shipping_cost ) {
+			
+			$title = "Step $step: Confirm Package Detail and Rates";
+
+			include( 'templates/slp-confirm-rates.php' );		
+		} else {
+			
+			$title = 'Confirm Shipment Details';
+			
+			include( 'templates/slp-confirm-shipment.php' );
+		}
+
 		$xml = array(
 			'Success'		=> true,
 			'Title' 		 	=> $title,
 			'StatusMessage' => ob_get_clean(),
 			'Post' 			=> $_POST['post']
 		);
-		
-  	  	self::send_json( $xml );
+
+		self::send_json( $xml );
 	}
 	
 	public static function confirm_shipment( $order, $shipment, $reload = false ) {
@@ -717,105 +219,7 @@ class slp_ajax_functions {
 		
 		ob_start();?>
 		
-		<p>Shipment for Order <strong><?php echo $order->get_order_number(); ?></strong>. View details below:</p><?php
-		
-        if( isset( $shipment['_errors'] ) ) { ?>
-        	<p>The following shipment errors occurred:</p><?php
-            foreach( $shipment['_errors'] as $key => $error ) {?>
-				<p style="background: none repeat scroll 0% 0% lightyellow;"><img src="<?php echo PLUGIN_URL; ?>/images/error.ico" width="16" height="16" /> <?php echo $error['error']; ?> <a href="#" id="shipment_error_<?php echo $key; ?>" class="fix_error">Fix</a></p><?php
-			}
-		} else {?>
-    <style type="text/css">
-		#view_shipment {
-			border-radius: 5px;
-			background: none repeat scroll 0% 0% #EEE;
-			padding: 10px;
-			box-shadow: 3px 3px 3px 2px;
-		}
-	</style>
-	<div id="view_shipment"><?php
-			if( isset( $shipment['_message'] ) ) { ?>
-            	<p><?php echo $shipment['_message']; ?></p><?php
-			}?>    
-		<table>
-            <tbody>
-                <tr>
-                    <td>Shipping Date</td>
-                    <td><?php echo date( 'm/d/Y', strtotime( $shipment['_shipping_date'] ) ); ?></td>
-                </tr>
-                <tr>
-                    <td>Shipping Cost</td>
-                    <td><?php echo wc_price( $shipment['_shipping_cost'] ); ?></td>
-                 </tr>
-                 <tr>
-                    <td>Status</td>
-                    <td><?php echo $shipment['_shipment_status']; ?></td>
-                 </tr>
-             </tbody>
-       	</table><?php
-		}?>
-       	<table width="100%">
-       		<thead>
-            	<tr>
-                	<th>Box#</th>
-                    <th>Tracking Number</th>
-                    <th>Shipping Cost</th>
-                    <th>Shipping Label</th>
-                </tr>
-            </thead>
-           	<tbody><?php
-        	foreach( $shipment['_packages'] as $key => $package ) { ?>
-            	<tr>
-                    <td><?php echo $key + 1; ?></td>
-                    <td><?php echo $package->id == 'No Tracking# Assigned' ? 'Not Trackable' : $package->id; ?></td>
-                    <td><?php echo isset( $package->ShippingCost ) ? wc_price( $package->ShippingCost ) : 'Not applicable'; ?></td>
-                    <td><?php echo isset( $package->ShippingLabel ) ? '<a class="slp_label" href="' . $package->ShippingLabel . '" target="_blank">View/Print Label</a>' : 'Not Available'; ?></td>
-               	</tr><?php
-           		if( isset( $package->Errors ) ) { ?>
-                <tr style="background: none repeat scroll 0% 0% lightyellow;">            
-                	<td><img src="<?php echo PLUGIN_URL; ?>/images/error.ico" width="16" height="16" /> Error:</td>   
-                  	<td colspan="2"><?php echo $package->Errors['error']; ?></td>
-                    <td style="text-align:left;"><a href="#" id="package-error_<?php echo $key; ?>" class="fix_error">FIX</a></td>
-                </tr><?php
-				}
-        	} ?>
-           	</tbody>
-        </table>
-	</div>
-		<script type="text/javascript">
-			(function($){	
-				var buttons = $( '.dialog' ).dialog( 'option', 'buttons' );				
-			
-				buttons['Cancel'] = function() {
-					$( '.dialog' ).dialog('close');
-					
-					if( <?php echo (int)$reload; ?> ) {	
-						window.location.reload();
-					} 
-				}
-				
-				$( '.dialog' ).dialog( 'option', 'buttons', buttons );
-				
-				$( '.ui-dialog-buttonset' ).children().not( ':last' ).hide();
-				$( '.ui-dialog-buttonset' ).children( ':last' ).button( 'option', 'label', 'Close' );
-					
-				$( '#shipping_total' ).html( '<?php echo wc_price( $shipment['_shipping_cost'] ); ?>' );
-				
-				$( '#shipment_status' ).html( '<?php echo $shipment['_shipment_status']; ?>' );	
-				
-				$( '.slp_label' ).on( 'click', function(e) {
-					e.preventDefault();	
-					
-					code = $(this).attr( 'href' ); 
-					
-					if( code.substring( 0, 4 ) == 'data' ) {
-						show_label( code );
-					} else {
-						window.open( code, '_blank' );
-					}
-				});
-			})(jQuery);
-		</script><?php
+		<?php
 		
 		$xml = array(
 			'Success' 		=> true,
