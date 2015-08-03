@@ -59,46 +59,40 @@ class SLP_Meta_Box {
 		<!--HTML meta box code start-->	
        	<div id="slp_meta_box">							
             <table>
-                <tr><td class="mb_label">Shipping Method:</td></tr>
-                <tr><td class="mb_value" id="shipping_method"><?php echo $order->get_shipping_method() ? $order->get_shipping_method() : 'None Selected';?></td></tr>
-                <tr><td class="mb_label">Actual Shipping Cost:</td></tr>
-                <tr><td class="mb_value" id="shipping_total"><?php echo is_numeric( $shipment['_shipping_cost'] ) ? wc_price( $shipment['_shipping_cost'] ) : $shipment['_shipping_cost']; ?></td></tr>
+                <tr><td class="mb_label" colspan="2">Shipping Method:</td></tr>
+                <tr><td class="mb_value" id="shipping_method" colspan="2"><?php echo $order->get_shipping_method() ? $order->get_shipping_method() : 'None Selected';?></td></tr>
+                <tr><td class="mb_label" colspan="2">Actual Shipping Cost:</td></tr>
+                <tr><td class="mb_value" id="shipping_total" colspan="2"><?php echo is_numeric( $shipment['_shipping_cost'] ) ? wc_price( $shipment['_shipping_cost'] ) : $shipment['_shipping_cost']; ?></td></tr>
                 <tr>
-                	<td class="mb_label" colspan="2">Tracking Number(s): <a href="#" class="ajax_control" title="Click to repack items" id="repack">Repack Items</a></td>
+                	<td class="mb_label" colspan="2">Tracking Number(s): <!--<a href="#" class="ajax_control" title="Click to repack items" id="repack">Repack Items</a>--></td>
                 </tr>
-                <tr><td class="mb_value"><?php
+                <tr><?php
 				
-         if( isset( $shipment['_packages'] ) ) { ?>
-                        <table><?php
+         if( isset( $shipment['_packages'] ) ) {
 			//parse through packages for display		
 			foreach( $shipment['_packages'] as $key => $package ) { 
-				//print_r( $package->TrackingStatus );
-			?>
-							<tr>
-								<td><a href="#" class="ajax_control" id="slip" name="<?php echo $key; ?>" title="Click to view packing slip.">Box<?php echo ($key + 1 ); ?></a>:</td>
-                                <td><span id="box<?php echo $key;?>"><?php echo $package->id; ?></span></td>
-                            </tr><?php
-                    if( isset( $package->ShippingLabel ) ) { ?>
-                    		<tr>	
-                                <td/>
-                                <td><a class="slp_label" href="<?php echo $package->ShippingLabel; ?>" title="Click to view/print labels" target="_blank"class="slp_label"> View Label</a></td><?php
-					} ?>
-                                </td>
-							</tr><?php
-			}?> 
-						</table><?php
+				//print_r( $package->TrackingStatus ); ?>
+                <tr>
+                    <td colspan="2" class="mb_value"><a href="#" class="ajax_control" id="slip" name="<?php echo $key; ?>" title="Click to view packing slip.">Box<?php echo ($key + 1 ); ?></a>
+                    <span id="box<?php echo $key;?>">: <?php echo $package->id; ?></span></td>
+                </tr><?php
+        		if( isset( $package->ShippingLabel ) ) { ?>
+                <tr>	
+                    <td/>
+                    <td><a class="slp_label" href="<?php echo $package->ShippingLabel; ?>" title="Click to view/print labels" target="_blank"class="slp_label"> View Label</a></td><?php
+       			} ?>
+                    </td>
+                </tr><?php
+			}
 		 } else {?>
-					No Packages Found <?php
+			No Packages Found <?php
 		 }?>
-					</td>
 				</tr>
                 <tr><td class="mb_label">Shipment Status:</td></tr>
                 <tr><td class="mb_value"><strong><span id="shipment_status"><?php echo $shipment['_shipment_status']; ?></span></strong></td></tr>
                 <tr>
-                	<td class="mb_value">
-                    	<button type="button" class="ajax_control dialog_nav" style="float:left;" id="mb_button_1"></button>
-                		<!--<button type="button" class="ajax_control dialog_nav" style="float:left;" id="mb_button_2">Print Invoice</button>-->
-                    </td>
+                	<td class="mb-label"><button type="button" class="ajax_control dialog_nav" style="float:left;" id="mb_button_1"></button></td>
+                    <td class="mb-label"><button type="button" class="ajax_control dialog_nav" id="mb_button_2">Reset Shipment</button></td>
                 </tr>
             </table>
        	</div>
@@ -129,8 +123,8 @@ class SLP_Meta_Box {
 						call = 'VerifyAddress';	
 					}
 				}
-				
-				$('#mb_button_1').text( text ).attr('title', title ).on( 'click', function() {
+								
+				$('#mb_button_1').text(text).on( 'click', function() {
 					data['action'] = 'process_shipment';
 					data['call'] = call;
 					
@@ -151,12 +145,14 @@ class SLP_Meta_Box {
 				}
 				
 				$( '#mb_button_2' ).on( 'click', function() {
+					var data = {
+						action: 'reset_order',
+						post_id: '<?php echo $order->id; ?>'
+					}
 					
-					var newWindow = window.open();
-					newWindow.document.write( <?php echo json_encode( $new_order_html ); ?> );
-					newWindow.setTimeout( function() {
-						newWindow.stop();
-					}, 300 );
+					show_processing();
+					
+					ajax_request( data );
 				});
 				
 				//set event handler for view packaging slip link
