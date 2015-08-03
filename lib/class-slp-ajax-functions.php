@@ -22,7 +22,7 @@ class slp_ajax_functions {
 	public function __construct() {
 		
 		$methods = get_shipping_methods();
-		
+				
 		foreach( $methods as $key => $method ) {
 			$class = 'SLP_' . strtoupper( $key );
 			
@@ -46,7 +46,8 @@ class slp_ajax_functions {
 			'get_labels',
 			'get_states',
 			'get_rates',
-			'repack_html'
+			'repack_html',
+			'reset_order'
 		);
 		
 		//Hook ajax callback functions
@@ -54,7 +55,6 @@ class slp_ajax_functions {
 			add_action( 'wp_ajax_' . $ajax_function, array( $this, $ajax_function ) );
 		}
 	}	
-	
 	
 	/**
 	 * Ajax function Process Shipment
@@ -292,153 +292,10 @@ class slp_ajax_functions {
 		self::$shipper = $this->get_shipper( $order );
 		
 		$boxes = self::$shipper->get_boxes();
-		
-		//var_dump( $boxes );
-				
+						
 		ob_start();
-		
-		foreach( $shipment['_packages'] as $key => $package ) {?>
-           <div style="vertical-align:top; display:inline-block; margin: 0 20px;">
-            	<table class="header_table" width="100%">
-                	<tr>
-						<td>Box<?php echo $key + 1; ?></td>
-                    </tr>
-                    <tr>
-                    	<td>Type</td>
-                        <td>
-                            <select id="slp_box_select"><?php
-                             foreach( $boxes as $index => $box ) {
-                                $box = (object)$box;
-								$dimensions = "L: $box->inner_length in W: $box->inner_width in H: $box->inner_height in ";
-                                if( $package->length == $box->inner_length && $package->width == $box->inner_width && $package->height == $box->inner_height ) {
-                                    $selected = 'selected="selected"';
-                                    $max_weight = $box->max_weight;
-									$package->box_weight = $box->box_weight;
-									$box_volume = $box->inner_length * $box->inner_height * $box->inner_width;
-									$package->percent = ( $package->volume/$box_volume ) * 100;
-                                } else {
-                                    $selected = '';
-                                }?>
-                                <option value="<?php echo $key; ?>" <?php echo $selected; ?>><?php echo isset( $box->name ) ? $box->name : $dimensions; ?></option><?php
-                             } ?>
-                            </select>
-                        </td>	
-                    </tr>
-                    <tr>
-                        <td>Dimensions</td>
-						<td id="dimensions">L: <?php echo $package->length; ?> in W: <?php echo $package->width; ?> in H: <?php echo $package->height; ?>in</td>          
-					</tr>
-                    <tr>
-                    	<td>Item Count</td>
-                        <td id="item_count"><?php echo sizeof( $package->packed ); ?></td>
-                    </tr>
-                   	<tr>
-                		<td>Max Weight</td>
-                        <td id="max_weight"><?php echo number_format( $max_weight, 2 ); ?> lbs</td>
-                    </tr>
-                    <tr>
-            			<td>Space Used</td>
-						<td id="space_used"><?php echo number_format( $package->percent, 2 ); ?>%</td>
-                    </tr>
-                    <tr>
-                    	<td>Space Free</td>
-                        <td id="free_space"><?php echo number_format( 100 - $package->percent, 2 ); ?> %</td>
-                    </tr>	
-                    <tr>
-                		<td>Total Weight</td>
-						<td id="current_weight"><?php echo number_format( $package->weight, 2 ); ?> lbs</td>
-                    </tr>
-            	</table>
-				<ul style="vertical-align:top; display:inline-block" id="sortable_<?php echo $key; ?>" class="connectedSortable"><?php
-				foreach( $package->packed as $index => $item ) {
-					$product = get_product( $item['meta']['id'] );?>
-              	 	<li id="item_<?php echo $index; ?>" class="ui-state-default"><span><?php echo $product->get_title(); ?></span></li><?php
-				} ?>
-            	</ul>
-			</div><?php
-            $package->calc_volume = $box_volume;
-		}?>
-        <div class="clear"></div>
-   		<p><button type="button" id="reset" class="dialog_nav" Title="Undo Changes">Undo Changes</button><button type="button"id="calculate_rate" class="dialog_nav">Calculate Shipping</button></p>
-		
-        <script type="text/javascript">
-			( function($) {
-								
-				$( '.dialog' ).on( 'dialogopen', function() {
-					$( '.connectedSortable' ).sortable({ connectWith: '.connectedSortable' }).disableSelection();
-						
-					$('.connectedSortable').on( 'sortreceive', function( event, ui ) {
-						packages = $(this).box_pack( ui, packages.length > 0 ? packages : response.packages );
-					});
-				});
-				
-				$.fn.box_pack = function( ui, packages ) {
-					var destin = this.attr( 'id' ). split( '_' )[1];
-					var origin = ui.sender.attr( 'id' ).split( '_' )[1];
-					var index = ui.item.attr( 'id' ).split( '_' )[1];
-					var item = packages[origin].packed[index];
-					
-					packages[origin].packed = $.makeArray( packages[origin].packed );
-					packages[origin].packed.splice( index, 1 );
-					packages[destin].packed = $.makeArray( packages[destin].packed );
-					packages[destin].packed.splice( ui.item.index(), 0, item );
-					
-					var boxes = {
-						origin: {
-							id:	origin,
-							package: packages[origin],
-							parent: ui.sender.parent(),
-							sortable: ui.sender
-						},
-						destin:	{
-							id: destin,
-							package: packages[destin],
-							parent: this.parent(),
-							sortable: this
-						},
-					}; 
-			
-					for( var box in boxes ) {
-						var box_volume = boxes[box].package.length * boxes[box].package.height * boxes[box].package.width;
-						var calc_volume = 0;
-						var calc_weight = 0 + boxes[box].package.box_weight;
-						var calc_value = 0;
-						var packed = boxes[box].package.packed;
-						for( var i = 0; i < packed.length; ++i ) {
-							$(boxes[box].sortable).children().eq(i).attr( 'id', 'item_' + i );
-							calc_volume += parseFloat( packed[i].length * packed[i].width * packed[i].height );		
-							calc_weight += parseFloat( packed[i].weight );	
-							calc_value += parseFloat( packed[i].value );
-						}
-					
-						var percent = parseFloat( calc_volume/box_volume );
-					
-						boxes[box].package.percent = percent;	
-						boxes[box].package.volume = calc_volume;
-						boxes[box].package.weight = calc_weight;
-						
-						packages[boxes[box].id] = boxes[box].package;
-						
-						var $parent = boxes[box].parent;
-						
-						$parent.find( '#item_count' ).text( boxes[box].package.packed.length ).end().find( '#space_used' ).text( parseFloat( percent * 100 ).toFixed(2)  + '%').end().find( '#free_space' ).text( 1 - percent <= 0 ? 0 + '%' : ( ( 1 - percent ) * 100 ).toFixed(2)  + '%').end().find( '#current_weight' ).text( parseFloat( calc_weight ).toFixed(2) + ' lbs');
-						
-						var package = boxes[box].package;
-						
-						if( percent > 1 || package.weight > package.max_weight ) {
-							$parent.find( '#space_used' ).css( 'color', 'red' );
-							$('#dialog_message').text( 'One or more boxes have exceeded its capacity. Ensure items will fit properly prior to shipping.' ); 
-						} else {
-							$parent.find( '#space_used' ).css( 'color', '' );
-							$('#dialog_message').text('');
-						}
-					}
-					return packages;
-				}
-			});
-		</script>
-		
-		<?php
+
+		include( 'templates/slp-repack.php' );
        
 		$xml = array(
 			'Success' 		=> true,
@@ -475,144 +332,10 @@ class slp_ajax_functions {
 		
 			$package = $packages[$box];
 			
-			ob_start(); ?>
- 
-            <div>
-                <p>For packing purposes only. Be sure to check order for variation details.</p>
-                <table style="width:100%;">    
-                    <tr>
-                        <td class="table_label">Package</td>
-                        <td id="box_key"><?php echo $box + 1; ?></td>
-                    </tr>
-                        <td class="table_label">Tracking Number</td>
-                        <td colspan="2" id="tracking_number"><?php echo isset( $package->id ) ? $package->id : 'Not Generated'; ?></td>
-      					<td id="tracking_buttons"><button class="ajax_control dialog_nav" id="edit_tracking" name="<?php echo $box; ?>" title="Click to change tracking number.">Update Tracking Number</button></td>
-                    <tr>	
-                        <td class="table_label">Package Dimensions:</td>
-                        <td colspan="2">L=<?php echo $package->length; ?> in W=<?php echo $package->width; ?> in H=<?php echo $package->height; ?> in Weight=<?php echo number_format( $package->weight, 2 ); ?> lbs</td>
-                    </tr>
-                </table>
-                <table width="100%">
-                    <thead>
-                        <tr class="table_label">
-                            <th><?php _e( 'Product ID', 'slp'); ?></th>
-                            <th><?php _e( 'Product', 'slp'); ?></th>
-                            <th><?php _e( 'Quantity', 'slp'); ?></th>
-                            <th><?php _e( 'Unit Price', 'slp'); ?></th>
-                            <th><?php _e( 'Subtotal', 'slp'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody><?php
-                    	$this->get_contents( $order, $package );?>
-                    </tbody>
-                </table> 
-                <p><button type="button" class="dialog_nav no_continue" id="print">Print</button></p><?php
-                if( sizeof( $packages ) > 1 ) { 
-				?>
-					<p><?php
-					if( $box > 0 ) { ?>
-						<button class="dialog_nav slip_nav" id="prev" value="<?php echo $box - 1; ?>">Prev Package</button><?php
-					}
-					if( $box < sizeof( $packages ) - 1 ) {?>
-						<button class="dialog_nav slip_nav" id="next" value="<?php echo $box + 1; ?>">Next Package</button><?php
-					}?> 
-                    </p><?php
-				} ?>
-            </div>
-			<script type="text/javascript">
-				(function($) {;
-					
-					//Hide unnecessary buttons
-					$( '.ui-dialog-buttonset' ).children().eq(1).hide();
-					$( '.ui-dialog-buttonset' ).children().eq(2).button( 'option', 'label', 'Close' );
-
-					//set packing slip action link event handler
-					$( '.slip_nav' ).on( 'click', function() {
-						var data = {
-							action: 'get_packing_slip',
-							box: $( this ).val().trim(),
-							post: <?php echo $_POST['post']; ?>
-						}
-						
-						ajax_request( data )
-					});
-					
-					
-					//set edit tracking button event handler
-					$( '#edit_tracking' ).one( 'click', editTracking );
-					
-					
-					//edit tracking function
-					function editTracking( e ) {
-						var tracking_number = $( '#tracking_number' ).text();
-						var button_text = $( this ).text();
-					
-						$( '#tracking_number' ).html( '<input type="text" value="' + tracking_number + '" id="tracker" />' );
-						$( '#tracker' ).focus().select();
-						$( '<button></button>' ).appendTo( '#tracking_buttons' ).addClass( 'dialog_nav' ).text( 'Cancel' ).one( 'click', { text: button_text, tracking_number: tracking_number }, cancelUpdate );
-						$( this ).text( 'Update' ).on( 'click', updateTracking );
-					};
-					
-					
-					//cancel edits function
-					function cancelUpdate( e ) {
-						$( '#tracking_number' ).empty().text( e.data.tracking_number );
-						$( '#tracker' ).remove();
-						$( this ).remove();
-						$( '#edit_tracking' ).text( e.data.text ).one( 'click', editTracking );
-					}
-					
-					//validate and set new tracking number
-					function updateTracking( e ) {
-						var key = parseInt( $( '#box_key' ).text() ) - 1;
-						var data = {
-							action: 'process_shipment',
-							call: 'validate_tracking',
-							post: <?php echo $order_id; ?>,
-							tracking_number: $.trim( $( '#tracker' ).val() ),
-							box: key
-						}
-						
-						$.post( ajaxurl, data, function( response ) {
-							response = $.parseJSON( response );
-														
-							if( response.Success == true ) {
-								$( '#dialog_message' ).html( '<p>Tracking number has been updated. Tracking information will be updated after clicking close</p>' ).css( 'color', 'black' );
-								$( '#box' + key ).text( response.TrackingNumber );	
-								$( '#tracking_number' ).text( response.TrackingNumber );
-								$( '#shipment_status' ).text( response.ShipmentStatus ); 
-								$( '#tracker' ).remove();
-								$( '#tracking_buttons' ).children().eq( 1 ).remove();
-								$( '#edit_tracking' ).text( 'Update Tracking Number' ).one( 'click', editTracking );
-								$( '.dialog' ).on( 'dialogclose', function() {
-									window.location.reload();
-								});
-							} else {
-								$( '#dialog_message' ).html( '<p>The tracking number entered is not valid. Please enter a valid tracking number or click cancel.</p>').css( 'color', 'red' );
-							}
-						});
-					}
-					
-				})(jQuery);
-			</script>
-            <style>
-				.tips{
-					 cursor: help;
-   					 text-decoration: none;
-				}
-				.slp_thumb img {
-					padding: 1px;
-					margin: 0px;
-					border: 1px solid #DFDFDF;
-					vertical-align: middle;
-					width: 50px;
-					height: 50px;
-				}
-				#tracker {
-					width: 300px;
-				}
-			</style>
-			<?php
+			ob_start();
+			
+			include( 'templates/slp-packing-slip.php' );
+			
 		} else {
 			self::error_handler( __FUNCTION__, __CLASS__, __LINE__, 'Package Info Not Found' );	
 		}
@@ -627,11 +350,6 @@ class slp_ajax_functions {
 		);
 
 		$this->send_json( $response );
-	}
-	
-	public function validate_tracking() {
-		
-		
 	}
 	
 	public function get_shipments() {
@@ -813,64 +531,13 @@ class slp_ajax_functions {
 		
 		//get packages
 		$packages = $shipment['_packages'];
+		
 		$shipper = get_post_meta( $_POST['post'], '_shipping_method', true );
 		
 		ob_start();
 		
-		//if packages are loaded process	
-		if( ! empty( $packages ) ) {
-			foreach( $packages as $key => $package ) {?>
-            <div>			
-                <table>
-                	<tbody>
-                	    <tr>
-                    		<td>Tracking Number</td>
-							<td><?php echo $package->id ?></td>
-                    	</tr>
-                    	<tr>   
-                    		<td>Date Shipped</td>
-                    	    <td><?php echo date( 'm/d/Y', strtotime( $shipment['_shipping_date'] ) );?></td>
-                    	</tr>
-                    	<tr>
-                    		<td>Shipping Method</td>
-                    	    <td><?php echo $order->get_shipping_method(); ?></td>
-                    	</tr>
-                    	<tr>
-                    		<td>Shipment Status</td>
-                    	    <td><?php echo $shipment['_shipment_status']; ?></td>
-                    	</tr><?php
-						if( $shipment['_shipment_status'] === 'DELIVERED' && ! empty( $package->tracking_status[0]['signer'] ) ) {?>
-						<tr>
-                        	<td>Signed By</td>
-                            <td><?php echo  $package->tracking_status[0]['signer'];	?></td>	 
-                        </tr>
-                      <?php } ?>  
-                   	</tbody> 
-                </table>	
-            	<table style="overflow-y:scroll; max-height:400px; width:100%;">
-                  <thead>
-                      <tr>
-                          <th>Date</th>
-                          <th>Status</th>
-                          <th>Description</th>
-                          <th>Location</th>
-                      </tr>
-                  </thead>	
-                  <tbody><?php
-				foreach( $package->tracking_status as $tracking ) { ?>                 
-                      <tr>
-                          <td><?php echo $tracking['timestamp']; ?></td>
-                          <td><?php echo $tracking['status']; ?></td>
-                          <td><?php echo $tracking['desc']; ?></td>
-                          <td><?php echo $tracking['location']; ?></td>
-                      </tr>        
-		 <?php } ?>  	
-         		</tbody> 
-            </table> 
-			<div><?php
-			}
-		}
-		
+		include( 'templates/slp-tracking-info.php' );
+				
 		$xml = array(
 			'Succes' 		=> true,
 			'StatusMessage'	=> ob_get_clean(),
@@ -887,21 +554,19 @@ class slp_ajax_functions {
 		die();
 	}
 	
-	
 	private function get_shipper( $order ) {
 		 
 		//get shipping carrier from order data
-		$carrier = $order->get_shipping_method();
-		
+		$carrier = $order->get_shipping_methods();
+		$carrier = $carrier[key($carrier)]['item_meta']['method_id'][0];
+
 		//trim special characters from carrier title for use in function
-		$carrier = explode( ',' , $carrier );
-		
-		$carrier = trim( preg_replace('#[()]#', '', substr( $carrier[0], strpos( $carrier[0], '(' ) ) ) );
+		$carrier = substr( $carrier, 0, strpos( $carrier, ':' ) );
 		
 		//locate carrier in carrier array and create instance of class if needed
 		if( ! array_keys( self::$carriers, $carrier ) ) {
 			$class = 'SLP_' . $carrier;
-		
+
 			if( ! class_exists( $class ) ) {
 				include( 'admin/class-slp-' . strtolower( $carrier ) . '.php' );
 				
@@ -1025,6 +690,20 @@ class slp_ajax_functions {
 		
 		$this->send_json( $states ); 
 			
+	}
+	
+	public function reset_order() {
+		if( isset( $_POST['post_id'] ) ) {
+			$sucess = delele_post_meta( $_POST['post_id'], '_shipment' );	
+		}
+		
+		$response = array(
+			'Success' => $success,
+			'reload'  => $success
+		);
+		
+		echo json_encode( $response );
+		die();
 	}
 }
 
