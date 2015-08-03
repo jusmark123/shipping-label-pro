@@ -11,4 +11,13 @@
 <file name="class-slp-shipments.php" server="Macintosh HD/Applications/XAMPP/xamppfiles/htdocs/wordpress/wp-content/" local="3498756062" remote="3498756062" Dst="-1" />
 <file name="class-slp-usps.php" server="HD Mac/Applications/XAMPP/xamppfiles/htdocs/Canyonwerks/" local="3519324288" remote="3519324288" Dst="-1" />
 <file name="class-slp-usps.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830134410000000" remote="130830134430000000" Dst="2" />
+<file name="class-slp-admin-settings.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698823809762" remote="130830190950000000" Dst="2" />
+<file name="class-slp-admin.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698823819763" remote="130830190950000000" Dst="2" />
+<file name="class-slp-general-settings.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698825679869" remote="130830190950000000" Dst="2" />
+<file name="class-slp-settings-page.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698825959885" remote="130830190960000000" Dst="2" />
+<file name="class-slp-shipments.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698826359908" remote="130830190960000000" Dst="2" />
+<file name="class-slp-shipping-method-settings.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698826489916" remote="130830190970000000" Dst="2" />
+<file name="class-slp-shipping-method.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698826499916" remote="130830190970000000" Dst="2" />
+<file name="class-slp-ups.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830202037758796" remote="130830202050000000" Dst="2" />
+<file name="test.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698834580378" remote="130830192170000000" Dst="2" />
 </dwsync>

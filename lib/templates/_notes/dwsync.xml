@@ -4,4 +4,9 @@
 <file name="slp-shipment-results.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830168550431995" remote="130830169020000000" Dst="2" />
 <file name="slp-confirm-shipment.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830161875111089" remote="130830169140000000" Dst="2" />
 <file name="slp-customs.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830138013496271" remote="130830169420000000" Dst="2" />
+<file name="slp-packing-slip.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830172517953818" remote="130830192240000000" Dst="2" />
+<file name="slp-repack.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830178185339373" remote="130830192240000000" Dst="2" />
+<file name="slp-tracking-display.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130827698834830393" remote="130830192240000000" Dst="2" />
+<file name="slp-tracking-info.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830175512766332" remote="130830192250000000" Dst="2" />
+<file name="slp-verfiy-address.php" server="jwalkerdzines.com/canyonwerks/wp-content/" local="130830131428641265" remote="130830192250000000" Dst="2" />
 </dwsync>
