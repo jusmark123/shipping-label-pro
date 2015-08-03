@@ -10,7 +10,12 @@ var history_cache = [];
 			$.post( ajaxurl, data, function( response ) {
 				response = $.parseJSON( response );
 				show_processing( false);
-				show_dialog( response );
+				
+				if( response.reload ) {
+					location.reload;
+				} else {
+					show_dialog( response );
+				}
 			});
 		}
 		
